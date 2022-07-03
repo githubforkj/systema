@@ -1,0 +1,203 @@
+{% load static %}
+<!doctype HTML>
+
+<html>
+        <head>
+		<script src="https://cdn.jsdelivr.net/npm/leaflet-heatmap@1/leaflet-heatmap.min.js"></script>
+		<!-- resposive -->
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.1/dist/leaflet.css">
+<link rel="stylesheet" href="css/leaflet.extra-markers.min.css" />
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/all.css" integrity="sha384-DNOHZ68U8hZfKXOrtjWvjxusGo9WQnrNx2sqG0tfsghAvtVlRW3tvkXWZh58N9jp" crossorigin="anonymous">
+    <!-- Bootstrap 3 icons -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <!-- Semantic UI -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui@2.3.1/dist/semantic.min.css">
+    <!-- css -->
+    <link rel="stylesheet" href="{% static 'index.css' %}">
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1/dist/leaflet-src.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<!-- Font Awesome 
+<link href="https://use.fontawesome.com/releases/v5.6.1/css/all.css" rel="stylesheet"> -->
+
+        </head>
+        <body ontouchstart="">
+		<div class="head">
+
+		<div class="title">
+			<p>Gecolocation</p>
+		</div>
+          	<div class="container">
+          		<h2>緯度と経度を入力してください</h2>
+          		<form id="ajax-number" action="{% url 'reload:ajax_number' %}" method="POST">
+              {% csrf_token %}
+	      <!--              			<input type="search" id="lat" value="36.0862289" required>
+	      <input type="search" id="lon" value="141.1062342" required>-->
+	      <input type="search" id="lat" placeholder="緯度を入力" required>
+              			<input type="search" id="lon" placeholder="経度を入力" required>
+              			<button type="submit">出力</button>
+
+			</form>
+      		</div>
+
+		</div>
+		<!-- <p>ここからdata1</p>
+	{% for item in data1 %}
+	<p>{{item.lat}}</p>
+	<p>{{item.lon}}</P>
+	{% endfor %}
+	<p>ここからdata2</p>
+	{% for item in data2 %}
+        <p>{{item.lat}}</p>
+        <p>{{item.lon}}</P>
+	{% endfor %} -->
+
+    <script>
+        function getCookie(name) {
+            var cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                var cookies = document.cookie.split(';');
+                for (var i = 0; i < cookies.length; i++) {
+                    var cookie = jQuery.trim(cookies[i]);
+                    // Does this cookie string begin with the name we want?
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        var csrftoken = getCookie('csrftoken');
+
+        function csrfSafeMethod(method) {
+            // these HTTP methods do not require CSRF protection
+            return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+        }
+
+        $.ajaxSetup({
+            beforeSend: function (xhr, settings) {
+                if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                    xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                }
+            }
+        });
+
+        $('#ajax-number').on('submit', function(e) {
+            e.preventDefault();
+
+            $.ajax({
+                'url': '{% url "reload:ajax_number" %}',
+                'type': 'POST',
+                'data': {
+                    'lat': $('#lat').val(),
+                    'lon': $('#lon').val(),
+                },
+                'dataType': 'json'
+            })
+            .done(function(response){
+		   // $('.result').append('<p>緯度：' + response.lat + '</p>');
+        	//$('.result').append('<p>経度：' + response.lon + '</p>');
+		reload_map(response.lat,response.lon,m);
+		  // $('.result').append(response.lat + response.lon);
+            });
+        });
+    </script>
+    <div id='mapcontainer'></div>
+
+    <script src="https://leaflet.github.io/Leaflet.heat/dist/leaflet-heat.js">
+    </script>
+	<script>
+	
+	var m = L.map('mapcontainer');
+	//function readdata() {
+//{% for item in data %}
+//var markerlocations = [{{item.lat}},{{item.lon}}];
+//{% endfor %}
+//{% for item in data1 %}
+var heat1locations = [{{item.lat}},{{item.lon}},0.8];
+//{% endfor %}
+//{% for item in data2 %}
+//var heat2locations = [{{item.lat}},{{item.lon}},0.8];
+//{% endfor %}
+
+//}
+
+    function init_map(m) {
+    m.setView([36.08681064144053, 140.10638418465544], 12); //初期の中心位置とズームレベルを記載
+
+    //マップタイルを読み込み、引用元を記載する
+    L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', 
+        {attribution: "<a href='http://osm.org/copyright'> ©OpenStreetMap </a>",
+	 maxZoom: 19,
+	 minZoom: 11
+	}).addTo(m);
+
+	    var markerOptions = {
+   title: "MyLocation",
+   clickable: true,
+   draggable: false,
+		   
+
+}
+{% for item in data %}
+	    var marker = L.marker([{{item.lat}},{{item.lon}}],markerOptions,);
+	    marker.addTo(m);
+{% endfor %}
+
+{% for item in data1 %}
+var heat1 = L.heatLayer([
+	[{{item.lat}}, {{item.lon}}, 0.8]],
+	{radius: 120, blur: 15, gradient:{0.0:'green', 0.3:'yellow', 1.0:'red'}}).addTo(m);
+{% endfor %}
+}
+
+//submitしたら読み込む地図
+    function reload_map(lat,lon,m) {
+m.setView([lat,lon], 13); //初期の中心位置とズームレベルを記載
+    //マップタイルを読み込み、引用元を記載する
+    L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', 
+        {attribution: "<a href='http://osm.org/copyright'> ©OpenStreetMap </a>",
+	 maxZoom: 19,
+         minZoom: 11
+	}).addTo(m);
+
+	    var markerOptions = {
+		    title: "MyLocation",
+   clickable: true,
+   draggable: false,
+		    
+	
+}
+{% for item in data %}
+	    var marker = L.marker([{{item.lat}},{{item.lon}}], markerOptions);
+	    marker.addTo(m);
+{% endfor %}
+
+{% for item in data1 %}
+var heat1 = L.heatLayer([
+	[{{item.lat}}, {{item.lon}}, 0.8]],
+	{radius: 120, blur: 15, gradient:{0.0:'green', 0.5:'yellow', 1.0:'red'}}).addTo(m);
+{% endfor %}
+
+}
+
+    //ダウンロード時に初期化する
+window.addEventListener('DOMContentLoaded', init_map(m), {once:true});
+//window.onload = readdata();
+   // $(function(){
+	   // $(document).on('click','submit',function(){
+		   // reload_map(lat,lon)
+	   // });
+   // });
+
+</script>
+
+	<footer>
+	</footer>
+
+
+        </body>
+</html>
